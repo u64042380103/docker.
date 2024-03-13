@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+
+  database:
+    image: mysql:latest
+    # NOTE: use of "mysql_native_password" is not recommended: https://dev.mysql.com/doc/refman/8.0/en/upgrading-from-previous-series.html#upgrade-caching-sha2-password
+    # (this is just an example, not intended to be a production configuration)
+    # command: --default-authentication-plugin=mysql_native_password
+    # restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: crud
+      MYSQL_USER: dora
+      MYSQL_PASSWORD: 1234
+      # MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    ports:
+      - 3306:3306
+    volumes:
+      - ./crud.sql:/docker-entrypoint-initdb.d/crud.sql
+    # restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - mynetwork
+  backend:
+    build: ./backend/
+    ports:
+      - 8081:8081
+    depends_on:
+      - database
+    environment:
+      DB_HOST: database
+      DB_USER: dora
+      DB_PASSWORD: 1234
+      DB_DATABASE: crud
+    networks:
+      - mynetwork
+  frontend:
+    build: ./frontend/
+    ports:
+      - 8088:3000
+    environment:
+      - http://localhost:8081
+    networks:
+      - mynetwork
+networks:
+  mynetwork:
+    driver: bridge
